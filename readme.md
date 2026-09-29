@@ -1,4 +1,4 @@
-# 🌿 Glow Henna  - Backend API
+# Glow Henna - Backend API
 
 > Smart Mehndi Booking & Artist Management System
 
