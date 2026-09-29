@@ -1,4 +1,8 @@
 const mongoose = require("mongoose");
+const dns = require("dns");
+
+// Use public resolvers when the local DNS service refuses Atlas SRV lookups.
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 let connectionPromise;
 
