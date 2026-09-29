@@ -1,4 +1,4 @@
-# 🌿 Fouz Ki Mehndi - Backend API
+# 🌿 Glow Henna  - Backend API
 
 > Smart Mehndi Booking & Artist Management System
 
@@ -21,7 +21,7 @@
 
 ## 🎯 Project Overview
 
-**Fouz Ki Mehndi** is a comprehensive backend system for managing mehndi artist bookings. The system provides:
+**Glow Henna** is a comprehensive backend system for managing mehndi artist bookings. The system provides:
 
 - User authentication and authorization
 - Artist and design management
