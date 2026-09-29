@@ -51,6 +51,8 @@ const createArtist = async (req, res) => {
 const getAllArtists = async (req, res) => {
   try {
     const { location, designType } = req.query;
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 60, 1), 100);
 
     // Build filter object
     let filter = {};
@@ -63,11 +65,17 @@ const getAllArtists = async (req, res) => {
       filter.designTypes = designType;
     }
 
-    const artists = await Artist.find(filter).sort({ rating: -1 });
+    const total = await Artist.countDocuments(filter);
+    const artists = await Artist.find(filter)
+      .sort({ rating: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: artists.length,
+      count: total,
+      page,
+      limit,
       data: artists,
     });
   } catch (error) {

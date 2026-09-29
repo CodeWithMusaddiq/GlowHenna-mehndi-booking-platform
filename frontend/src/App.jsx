@@ -51,7 +51,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ArtistPage from "./pages/ArtistPage";
 import DesignPage from "./pages/DesignPage";
-import PriceEstimator from "./pages/PriceEstimator";
 import BookingPage from "./pages/BookingPage";
 import PaymentPage from "./pages/PaymentPage";
 import FestivalPage from "./pages/FestivalPage";
@@ -69,7 +68,6 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/artists" element={<ArtistPage />} />
         <Route path="/designs" element={<DesignPage />} />
-        <Route path="/price-estimator" element={<PriceEstimator />} />
         <Route path="/festival" element={<FestivalPage />} />
         <Route path="/design-suggestion" element={<DesignSuggestionPage />} />
 

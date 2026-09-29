@@ -34,6 +34,14 @@ app.get("/", (req, res) => {
   res.send("Fouz Ki Mehndi Backend is Running...");
 });
 
+app.use((error, req, res, next) => {
+  if (error.type === "entity.parse.failed") {
+    return res.status(400).json({ message: "Invalid JSON request body" });
+  }
+
+  next(error);
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
