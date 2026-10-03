@@ -4,8 +4,11 @@ const {
   registerUser,
   loginUser,
 } = require("../controllers/authController");
+const validateRequest = require("../middleware/validateRequest");
+const { authLimiter } = require("../middleware/rateLimiters");
+const { registerBody, loginBody } = require("../validators/requestSchemas");
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/register", authLimiter, validateRequest(registerBody, "body"), registerUser);
+router.post("/login", authLimiter, validateRequest(loginBody, "body"), loginUser);
 
 module.exports = router;

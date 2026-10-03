@@ -167,8 +167,8 @@ backend/
 ## 🚀 Installation & Setup
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- MongoDB (local or Atlas)
+- Node.js (v20 or higher)
+- MongoDB 6.0+ (local or Atlas; the active booking-slot index uses a partial filter)
 - npm or yarn
 
 ### Step 1: Clone Repository
@@ -183,13 +183,10 @@ npm install
 ```
 
 ### Step 3: Setup Environment Variables
-Create a `.env` file in the root directory:
+From the `backend` directory, copy `.env.example` to `.env` and set your local MongoDB URI, a random JWT secret of at least 32 characters, and an Unsplash access key. Keep `.env` private; it is ignored by Git.
 
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/hennaDB
-JWT_SECRET=your_super_secret_jwt_key_here_min_32_chars
-NODE_ENV=development
+```powershell
+Copy-Item .env.example .env
 ```
 
 ### Step 4: Start MongoDB
@@ -214,7 +211,21 @@ Server will run on: `http://localhost:5000`
 | `PORT` | Server port | 5000 |
 | `MONGO_URI` | MongoDB connection string | mongodb://localhost:27017/hennaDB |
 | `JWT_SECRET` | Secret key for JWT | min 32 characters |
+| `FRONTEND_URL` | Additional allowed frontend origin | http://localhost:5173 |
+| `UNSPLASH_ACCESS_KEY` | Server-side Unsplash API access key | Set locally; never add it to frontend code |
 | `NODE_ENV` | Environment mode | development/production |
+
+### Tests and local performance check
+
+The backend tests use an isolated in-memory MongoDB instance:
+
+```powershell
+npm test
+```
+
+To repeat the small local API benchmark, run `npm run perf` from the backend directory. It does not connect to `MONGO_URI`; see [PERFORMANCE.md](./PERFORMANCE.md) for the recorded run and limitations.
+
+The database enforces unique active artist/date/time slots. Before deploying this index to a database that already contains bookings, resolve any duplicate non-cancelled slots so MongoDB can build the unique index.
 
 ---
 
@@ -937,3 +948,5 @@ This project is for educational purposes.
 **Project Status:** ✅ **PRODUCTION READY**
 
 Last Updated: February 15, 2026
+#   G l o w H e n n a - m e h n d i - b o o k i n g - p l a t f o r m  
+ 

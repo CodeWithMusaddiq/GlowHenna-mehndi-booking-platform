@@ -56,6 +56,21 @@ const bookingSchema = new mongoose.Schema(
   }
 );
 
+bookingSchema.index(
+  { artistId: 1, bookingDate: 1, time: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      bookingStatus: { $in: ['pending', 'confirmed'] },
+    },
+    name: 'unique_active_artist_booking_slot',
+  }
+);
+// Supports the user's booking history, which is sorted newest first.
+bookingSchema.index({ userId: 1, createdAt: -1 });
+// Supports the admin booking list sorted newest first.
+bookingSchema.index({ createdAt: -1 });
+
 const Booking = mongoose.model('Booking', bookingSchema);
 
 module.exports = Booking;

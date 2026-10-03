@@ -1,215 +1,79 @@
 const Design = require('../models/Design');
+const ApiError = require('../middleware/apiError');
 
-// @desc    Create a new design (Admin only)
-// @route   POST /api/designs
-// @access  Protected (Admin)
-const createDesign = async (req, res) => {
+const createDesign = async (req, res, next) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin only.',
-      });
-    }
-
-    const { designName, category, imageURL, suitableHandSize, basePrice } = req.body;
-
-    // Basic validation
-    if (!designName || !category || !imageURL || !suitableHandSize || !basePrice) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide all required fields',
-      });
-    }
-
-    // Create design
-    const design = await Design.create({
-      designName,
-      category,
-      imageURL,
-      suitableHandSize,
-      basePrice,
-    });
-
-    res.status(201).json({
-      success: true,
-      data: design,
-    });
+    const design = await Design.create(req.body);
+    res.status(201).json({ success: true, data: design });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-// @desc    Get all designs with optional filters
-// @route   GET /api/designs
-// @access  Public
-const getAllDesigns = async (req, res) => {
+const getAllDesigns = async (req, res, next) => {
   try {
     const { category, handSize } = req.query;
-
-    // Build filter object
-    let filter = {};
-
-    if (category) {
-      filter.category = category;
-    }
-
-    if (handSize) {
-      filter.suitableHandSize = handSize;
-    }
+    const filter = {};
+    if (category) filter.category = category;
+    if (handSize) filter.suitableHandSize = handSize;
 
     const designs = await Design.find(filter).sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: designs.length,
-      data: designs,
-    });
+    res.status(200).json({ success: true, count: designs.length, data: designs });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-// @desc    Get designs by category
-// @route   GET /api/designs/category/:type
-// @access  Public
-const getDesignsByCategory = async (req, res) => {
+const getDesignsByCategory = async (req, res, next) => {
   try {
-    const { type } = req.params;
-
-    // Validate category
     const validCategories = ['Basic', 'Bridal', 'Arabic', 'Festival', 'Floral'];
-    if (!validCategories.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid category. Must be: Basic, Bridal, Arabic, Festival, or Floral',
-      });
+    if (!validCategories.includes(req.params.type)) {
+      throw new ApiError(400, 'Invalid design category', 'VALIDATION_ERROR');
     }
 
-    const designs = await Design.find({ category: type }).sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: designs.length,
-      data: designs,
-    });
+    const designs = await Design.find({ category: req.params.type }).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: designs.length, data: designs });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-// @desc    Get single design by ID
-// @route   GET /api/designs/:id
-// @access  Public
-const getDesignById = async (req, res) => {
+const getDesignById = async (req, res, next) => {
   try {
     const design = await Design.findById(req.params.id);
-
     if (!design) {
-      return res.status(404).json({
-        success: false,
-        message: 'Design not found',
-      });
+      throw new ApiError(404, 'Design not found', 'NOT_FOUND');
     }
-
-    res.status(200).json({
-      success: true,
-      data: design,
-    });
+    res.status(200).json({ success: true, data: design });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-// @desc    Update design (Admin only)
-// @route   PUT /api/designs/:id
-// @access  Protected (Admin)
-const updateDesign = async (req, res) => {
+const updateDesign = async (req, res, next) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin only.',
-      });
-    }
-
-    const design = await Design.findById(req.params.id);
-
+    const design = await Design.findByIdAndUpdate(req.params.id, req.body, {
+      returnDocument: 'after',
+      runValidators: true,
+    });
     if (!design) {
-      return res.status(404).json({
-        success: false,
-        message: 'Design not found',
-      });
+      throw new ApiError(404, 'Design not found', 'NOT_FOUND');
     }
-
-    const updatedDesign = await Design.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-
-    res.status(200).json({
-      success: true,
-      data: updatedDesign,
-    });
+    res.status(200).json({ success: true, data: design });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-// @desc    Delete design (Admin only)
-// @route   DELETE /api/designs/:id
-// @access  Protected (Admin)
-const deleteDesign = async (req, res) => {
+const deleteDesign = async (req, res, next) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin only.',
-      });
-    }
-
-    const design = await Design.findById(req.params.id);
-
+    const design = await Design.findByIdAndDelete(req.params.id);
     if (!design) {
-      return res.status(404).json({
-        success: false,
-        message: 'Design not found',
-      });
+      throw new ApiError(404, 'Design not found', 'NOT_FOUND');
     }
-
-    await Design.findByIdAndDelete(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Design deleted successfully',
-    });
+    res.status(200).json({ success: true, message: 'Design deleted successfully' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 

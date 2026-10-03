@@ -32,6 +32,12 @@ const designSchema = new mongoose.Schema(
   }
 );
 
+// Supports the unfiltered list and each existing optional filter + createdAt sort.
+designSchema.index({ createdAt: -1 });
+designSchema.index({ category: 1, createdAt: -1 });
+designSchema.index({ suitableHandSize: 1, createdAt: -1 });
+designSchema.index({ category: 1, suitableHandSize: 1, createdAt: -1 });
+
 const Design = mongoose.model('Design', designSchema);
 
 module.exports = Design;

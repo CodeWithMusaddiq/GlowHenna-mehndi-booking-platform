@@ -7,18 +7,36 @@ const {
   updateDesign,
   deleteDesign,
 } = require('../controllers/designController');
+const { getDesignSuggestions } = require('../controllers/suggestionController');
 const { protect } = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/requireRole');
+const validateRequest = require('../middleware/validateRequest');
+const { suggestionLimiter } = require('../middleware/rateLimiters');
+const {
+  designCreateBody,
+  designUpdateBody,
+  designListQuery,
+  idParams,
+  suggestionQuery,
+} = require('../validators/requestSchemas');
 
 const router = express.Router();
 
 // Public routes
-router.get('/', getAllDesigns);
+router.get('/', validateRequest(designListQuery, 'query'), getAllDesigns);
 router.get('/category/:type', getDesignsByCategory);
-router.get('/:id', getDesignById);
+router.get('/suggestions', suggestionLimiter, validateRequest(suggestionQuery, 'query'), getDesignSuggestions);
+router.get('/:id', validateRequest(idParams, 'params'), getDesignById);
 
-// Protected routes (Admin only - role check happens in controller)
-router.post('/', protect, createDesign);
-router.put('/:id', protect, updateDesign);
-router.delete('/:id', protect, deleteDesign);
+router.post('/', protect, requireRole('admin'), validateRequest(designCreateBody, 'body'), createDesign);
+router.put(
+  '/:id',
+  protect,
+  requireRole('admin'),
+  validateRequest(idParams, 'params'),
+  validateRequest(designUpdateBody, 'body'),
+  updateDesign
+);
+router.delete('/:id', protect, requireRole('admin'), validateRequest(idParams, 'params'), deleteDesign);
 
 module.exports = router;

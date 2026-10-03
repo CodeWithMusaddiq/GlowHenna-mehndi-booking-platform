@@ -52,6 +52,11 @@ const artistSchema = new mongoose.Schema(
   }
 );
 
+// Supports the unfiltered rating-sorted artist list.
+artistSchema.index({ rating: -1 });
+// Supports exact design-type filtering while keeping rating order.
+artistSchema.index({ designTypes: 1, rating: -1 });
+
 const Artist = mongoose.model('Artist', artistSchema);
 
 module.exports = Artist;

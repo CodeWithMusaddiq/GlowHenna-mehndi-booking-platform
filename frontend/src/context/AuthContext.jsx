@@ -38,28 +38,27 @@
 // }
 
 // export default AuthProvider;
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useContext } from "react";
 
+// eslint-disable-next-line react-refresh/only-export-components -- Context is intentionally exported with its provider.
 export const AuthContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components -- Shared hook belongs with the context it consumes.
 export const useAuth = () => {
   return useContext(AuthContext);
 };
 
 function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // ← NEW: start as true
-
-  useEffect(() => {
+  const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+      return JSON.parse(storedUser);
     }
-
-    setLoading(false); // ← NEW: done checking, allow render
-  }, []);
+    return null;
+  });
+  const loading = false;
 
   const login = (userData) => {
     localStorage.setItem("token", userData.token);

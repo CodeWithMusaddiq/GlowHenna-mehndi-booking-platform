@@ -7,16 +7,30 @@ const {
   deleteArtist,
 } = require('../controllers/artistController');
 const { protect } = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/requireRole');
+const validateRequest = require('../middleware/validateRequest');
+const {
+  artistCreateBody,
+  artistUpdateBody,
+  artistListQuery,
+  idParams,
+} = require('../validators/requestSchemas');
 
 const router = express.Router();
 
 // Public routes
-router.get('/', getAllArtists);
-router.get('/:id', getArtistById);
+router.get('/', validateRequest(artistListQuery, 'query'), getAllArtists);
+router.get('/:id', validateRequest(idParams, 'params'), getArtistById);
 
-// Protected routes (Admin only - role check happens in controller)
-router.post('/', protect, createArtist);
-router.put('/:id', protect, updateArtist);
-router.delete('/:id', protect, deleteArtist);
+router.post('/', protect, requireRole('admin'), validateRequest(artistCreateBody, 'body'), createArtist);
+router.put(
+  '/:id',
+  protect,
+  requireRole('admin'),
+  validateRequest(idParams, 'params'),
+  validateRequest(artistUpdateBody, 'body'),
+  updateArtist
+);
+router.delete('/:id', protect, requireRole('admin'), validateRequest(idParams, 'params'), deleteArtist);
 
 module.exports = router;

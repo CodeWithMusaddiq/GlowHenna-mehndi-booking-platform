@@ -1,61 +1,32 @@
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
+const ApiError = require('../middleware/apiError');
 
-// @desc    Create/Simulate payment for a booking
-// @route   POST /api/payment
-// @access  Protected
-const createPayment = async (req, res) => {
+const createPayment = async (req, res, next) => {
   try {
     const { bookingId } = req.body;
-
-    if (!bookingId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Booking ID is required',
-      });
-    }
-
-    // Check if booking exists
     const booking = await Booking.findById(bookingId);
-
     if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found',
-      });
+      throw new ApiError(404, 'Booking not found', 'NOT_FOUND');
     }
-
-    // Check if booking belongs to logged-in user
     if (booking.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to make payment for this booking',
-      });
+      throw new ApiError(403, 'Not authorized to make payment for this booking', 'FORBIDDEN');
     }
 
-    // Check if payment already exists for this booking
     const existingPayment = await Payment.findOne({ bookingId });
-
     if (existingPayment) {
-      return res.status(400).json({
-        success: false,
-        message: 'Payment already exists for this booking',
-      });
+      throw new ApiError(409, 'Payment already exists for this booking', 'PAYMENT_ALREADY_EXISTS');
     }
 
-    // Generate a fake transaction ID (simulate payment gateway)
     const transactionId = `TXN${Date.now()}${Math.floor(Math.random() * 10000)}`;
-
-    // Create payment
     const payment = await Payment.create({
       bookingId,
       amount: booking.totalPrice,
       transactionId,
-      paymentStatus: 'paid', // Simulating successful payment
+      paymentStatus: 'paid',
       paymentDate: new Date(),
     });
 
-    // Update booking payment status
     booking.paymentStatus = 'paid';
     await booking.save();
 
@@ -65,64 +36,36 @@ const createPayment = async (req, res) => {
       data: payment,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    if (error.code === 11000 && error.keyPattern?.bookingId) {
+      return next(new ApiError(409, 'Payment already exists for this booking', 'PAYMENT_ALREADY_EXISTS'));
+    }
+    next(error);
   }
 };
 
-// @desc    Get payment details by booking ID
-// @route   GET /api/payment/:bookingId
-// @access  Protected
-const getPaymentByBookingId = async (req, res) => {
+const getPaymentByBookingId = async (req, res, next) => {
   try {
-    const payment = await Payment.findOne({ bookingId: req.params.bookingId }).populate(
-      'bookingId',
-      'bookingDate time totalPrice bookingStatus paymentStatus'
-    );
+    const payment = await Payment.findOne({ bookingId: req.params.bookingId })
+      .populate('bookingId', 'userId bookingDate time totalPrice bookingStatus paymentStatus');
 
     if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Payment not found for this booking',
-      });
+      throw new ApiError(404, 'Payment not found for this booking', 'NOT_FOUND');
+    }
+    if (
+      payment.bookingId.userId.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      throw new ApiError(403, 'Not authorized to view this payment', 'FORBIDDEN');
     }
 
-    // Check if booking belongs to logged-in user (or user is admin)
-    const booking = await Booking.findById(payment.bookingId._id);
-    if (booking.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to view this payment',
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: payment,
-    });
+    res.status(200).json({ success: true, data: payment });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-// @desc    Get all payments (Admin only)
-// @route   GET /api/payment
-// @access  Protected (Admin)
-const getAllPayments = async (req, res) => {
+const getAllPayments = async (req, res, next) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin only.',
-      });
-    }
-
     const payments = await Payment.find()
       .populate({
         path: 'bookingId',
@@ -134,21 +77,10 @@ const getAllPayments = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: payments.length,
-      data: payments,
-    });
+    res.status(200).json({ success: true, count: payments.length, data: payments });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-module.exports = {
-  createPayment,
-  getPaymentByBookingId,
-  getAllPayments,
-};
+module.exports = { createPayment, getPaymentByBookingId, getAllPayments };

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import ImageUploader from "../components/ImageUploader";
-
-const ACCESS_KEY = "z7rgfSYWxzB7ByzdH7Q1k74i51_dJyXaPOZOhCWN2PE";
+import api from "../services/api";
 
 function DesignSuggestionPage() {
   const [analysis, setAnalysis] = useState(null);
@@ -12,12 +11,9 @@ function DesignSuggestionPage() {
   const fetchSuggestions = async (handSize) => {
     setLoading(true);
     setError("");
-    const query = handSize === "small" ? "minimal henna design hand" : handSize === "large" ? "bridal henna full hand" : "mehndi design hand";
     try {
-      const response = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=9`, { headers: { Authorization: `Client-ID ${ACCESS_KEY}` } });
-      if (!response.ok) throw new Error("Suggestion service unavailable");
-      const data = await response.json();
-      setSuggestedImages(data.results.map((image) => ({ url: image.urls.regular, alt: image.alt_description || "Henna design suggestion" })));
+      const response = await api.get("/api/designs/suggestions", { params: { handSize } });
+      setSuggestedImages(response.data.data);
     } catch {
       setError("We could not refresh suggestions right now. Your uploaded image is still private to this session.");
     } finally {
