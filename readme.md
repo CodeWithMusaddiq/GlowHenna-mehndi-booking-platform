@@ -1,6 +1,6 @@
-# GlowHenna – Mehndi Booking Platform
+# Glora – Mehndi Booking Platform
 
-GlowHenna is a full-stack MERN booking platform designed to streamline mehndi artist discovery, design management, pricing, and customer bookings while preventing scheduling conflicts and double bookings.
+Glora is a full-stack MERN booking platform designed to streamline mehndi artist discovery, design management, pricing, and customer bookings while preventing scheduling conflicts and double bookings.
 
 ## 🚀 Features
 
